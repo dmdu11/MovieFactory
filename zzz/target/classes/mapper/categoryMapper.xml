@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="categoryMapper">
+	<select id="findMaxLno" resultType="long">
+		select nvl(max(lno),0) from large_category
+	</select>
+	
+	<insert id="insertLargeCategory">
+		insert into large_category(lno, name) values(#{lno},#{name})
+	</insert>
+	
+	<select id="findByLno" resultType="hashmap">
+		select lno, name from large_category where lno=#{lno}
+	</select>
+	
+	<select id="findMaxSno" resultType="long">
+		select nvl(max(sno),0) from small_category 
+	</select>
+	
+	<insert id="insertSmallCategory">
+		insert into small_category(sno, name, lno) values(#{sno},#{name},#{lno})
+	</insert>
+	
+	<select id="findBySno" resultType="hashmap">
+		select sno, name, lno from small_category where sno=#{sno}
+	</select>
+
+	<select id="findAllLargeCategory" resultType="hashmap">
+		select lno, name from large_category order by lno
+	</select>
+	
+	<select id="findAllSmallCategory" resultType="hashmap">
+		select sno, name from small_category where lno=#{lno} order by sno 
+	</select>
+	
+	<!-- SmallCategory -->
+	<resultMap type="hashmap" id="mapForSmallCategory">
+		<result property="sno" column="ssno"/>
+		<result property="name" column="sname" />
+		<result property="lno" column="slno" />
+	</resultMap>
+	
+	<!-- LargeCategory
+		class LargeCategory{
+			private long lno;
+			private String name;
+			private List<Map> smallCategory;
+		}
+	 -->
+	<resultMap type="hashmap" id="mapForCategory">
+		<result property="lno" column="llno"/>
+		<result property="name" column="lname" />
+		<collection property="smallCategories" javaType="java.util.ArrayList" resultMap="mapForSmallCategory"/>
+	</resultMap>
+	
+	<select id="findAll" resultMap="mapForCategory">
+		select l.lno llno, l.name lname, s.sno ssno, s.name sname, s.lno slno from large_category l, small_category s where l.lno=s.lno
+	</select>
+	
+</mapper>
+
+
+
+

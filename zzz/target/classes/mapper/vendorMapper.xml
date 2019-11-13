@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="vendorMapper">
+<select id="findMaxVendorNo" resultType="long">
+	select nvl(max(vendor_no),0) from vendor
+</select>
+<insert id="insert">
+	insert into vendor(vendor_no, name, tel, sno, total_sales_cnt, total_sales_amount) values(#{vendorNo},#{name}, #{tel},#{sno},0,0)
+</insert>
+<select id="findById" resultType="vendor">
+	select vendor_no vendorNo, name, tel, sno from vendor where vendor_no = #{vendorNo}
+</select>
+<select id="findAll" resultType="vendor">
+	select vendor_no vendorNo , name, tel, sno, total_sales_cnt totalSalesCnt, total_sales_amount totalSalesAmount from vendor where sno=#{sno}
+</select>
+<update id="update">
+	update vendor set vendor_no=#{vendorNo}, name=#{name}, tel=#{tel}, sno=#{sno} where vendor_no=#{vendorNo}  
+</update>
+<delete id="delete">
+	delete from vendor where vendor_no=#{vendorNo}
+</delete>
+<update id="updateSalesInfo">
+	update vendor set total_sales_cnt=#{totalSalesCnt}, total_sales_amount=#{totalSalesAmount} where vendor_no=#{vendorNo}
+</update>
+</mapper>

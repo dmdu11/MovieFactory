@@ -1,0 +1,22 @@
+###### CategoryController ######
+1. 대분류 추가				@PostMapping("/categories/large")
+	service.findAllLargeCategory()
+		dao.findMaxLno()+1															CM-001
+		dao.insertLargeCategory(lno, name)											CM-002
+		dao.findByLno(lno)															CM-003
+2. 소분류 추가				@PostMapping("/categories/small")
+	service.insertSmallCategory(name, lno)
+		dao.findMaxSno()															CM-004
+		dao.insertSmallCategory(sno, name, lno)										CM-005
+		findBySno(sno) 																CM-006
+3. 대분류 읽어오기			@GetMapping("/categories/large")
+	service.findAllLargeCategory()
+		dao.findAllLargeCategory()													CM-007
+		
+4. 소분류 읽어오기			@GetMapping("/categories/small")
+	service.findAllSmallCategory(lno)
+		dao.findAllSmallCategory(lno)												CM-008
+		
+5. 분류 읽어오기			@GetMapping("/categories")
+	service.findAll()
+		dao.findAllLargeCategory()													CM-009

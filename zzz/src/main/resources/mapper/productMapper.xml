@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="productMapper">
+	<insert id="insert">
+		<selectKey keyProperty="productNo" resultType="long" order="BEFORE">
+			select product_seq.nextval from dual
+		</selectKey>
+		insert into product(product_no, lno, sno, vendor_no, name, price, stock, info, image, rating_cnt, rating_sum, total_sales_cnt, total_sales_amount) 
+		 values(#{productNo},#{lno},#{sno},#{vendorNo},#{name},#{price},#{stock},#{info},#{image, jdbcType=VARCHAR},0,0,0,0)
+	</insert>
+	<!-- image에 null 집어넣으려고(이미지가 있을 수도 있고 없을 수도 있다.)
+		{jdbcType=VARCHAR}을 써주는것임
+	 -->
+	<select id="findById" resultType="product">
+		select product_no productNo, lno, sno, vendor_no vendorNo, name, price, stock, info, image, rating_cnt ratingCnt,
+		 rating_sum ratingSum, total_sales_cnt totalSalesCnt, total_sales_amount totalSalesAmount from product where product_no=#{productNo} and rownum=1
+	</select>
+	
+	<!-- 이거 다시  근데 PageNo가 나오면 페이징쿼리를 하라는그런걸까? -->
+	<!-- index가르쳐주는게 힌트(근데 힌트가 프로그래머가 쓰는것은 아님)
+		index의 개수만 세는것 (그것이 항목의 개수니까) 그게 index_ffs임(병렬로 된다는 뭐시기 그거)
+	 -->
+	 	<!-- index_ffs는 인덱스를 병렬로 탄다. count할 경우 효과적
+		 단 idnex_ffs() 힌트 뒤에는 힌트에서 사용한 인덱스의 컬럼만 와야한다. 다른 컬럼이 올 경우 힌트 무시
+	 -->
+	 <!-- 이거 내가 안 썼었음 -->
+	<select id="findCount" resultType="int">
+		select /*+ index_ffs(product product_pk_product_no) */ count(product_no) from product
+	</select>
+	
+	<select id="findAllByPageNo" resultType="product">
+		<![CDATA[
+			select * from 
+				(
+				select rownum as rnum, p.* from
+					(select /*+ index_desc(product product_pk_product_no) */ product_no productNo, lno, sno, vendor_no vendorNo, name, price, stock, info, image from product)p
+				where rownum <= #{endRowNum}
+				)
+			where rnum >= #{startRowNum}
+		]]>
+	</select>
+	
+	<select id="findCountByName" resultType="int">
+		select /*+ index_ffs(product product_pk_product_no) */ count(product_no) from product where name like '%'||#{name}#||'%'
+	</select>
+	
+	<select id="findAllByName" resultType="product">
+		<![CDATA[
+			select * from (
+				select rownum rnum, p.* from
+					(select /*+ index_desc(product product_pk_product_no) */ product_no productNo, vendor_no vendorNo, name, price, image from product where name like '%'||#{name}#||'%') p
+				where rownum <= #{endRowNum}	
+			)
+			where rnum >= #{startRowNum}
+			
+		]]>
+	</select>
+	
+	
+	<select id="findCountByCategory" resultType="int">
+		select /*+ index_ffs(product product pk_product_no) */ count(product_no) from product where lno = #{lno}
+	</select>
+	
+	<select id="findAllByCategory" resultType="product">
+		<![CDATA[
+			select * from (
+				select rownum rnum, p.* from
+					(select /*+ index_desc(product product_pk_product_no) */ product_no productNo, vendor_no vendorNo, name, price, image from product where lno = #{lno}) p
+				where rownum <= #{endRowNum}	
+			)
+			where rnum >= #{startRowNum}
+			
+		]]>
+	</select>
+	<!-- 
+		여기서 어떻게 동적 update문을 생각하는거지.? 
+		아 이렇게 쓰면 하나만 바꿔주려고 해도 다른것도 다 써줘야해서 그런건가?
+	 -->
+	<!-- <update id="update"> 내가하려고 했던거
+		update product set product_no=#{productNo}, lno=#{lno}, sno=#{sno}, vendor_no=#{vendorNo}, name=#{name}, price=#{price}, stock=#{stock}, info=#{info},
+		image = #{image} where product_no=#{productNo}
+	</update> -->
+	<!--
+		쉼표가 들어가는 해결방안으로 product_no를 넣는이유는 하나만 바꾸려고 했을 때  
+		뒤에 쉼표가 들어가게 됨. 따라서 맨 마지막에 무조건 실행되는것을 넣어주는것임
+		기본키인 productNo가 비어질 수는 없으니까 넣어주는것이다.
+	-->
+	<update id="update">
+		update product
+		<set>
+			<if test="vendorNo!=null">vendor_no=#{vendorNo},</if>
+			<if test="name!=null">name=#{name},</if>
+			<if test="price!=null">price=#{price},</if>
+			<if test="info!=null">info=#{info},</if>
+			<if test="stock!=null">stock=#{stock},</if>
+			<if test="productNo!=null">product_no=#{productNo}</if>
+		</set>
+		where product_no=#{productNo}
+	</update>
+	
+	<update id="updateSalesInfo">
+		update product set total_sales_cnt = total_sales_cnt+#{count}, total_sales_amount = total_sales_amount+#{amount} where product_no = #{productNo} 
+	</update>
+	
+	<!-- rating은 sum/cnt아님? 왜 더하고 지롤.
+		: rating은 이미 결과물인거니까 rating = rating_sum +#{ratingSum} 인건가 (cnt도 마찬가지)
+	 -->
+	<update id="updateRating">
+		update product set rating_cnt = rating_cnt+1, ratng_sum=#{rating} where product_no=#{productNo}
+	</update>
+	
+	<delete id="deleteById">
+		delete from product where product_no = #{productNo}
+	</delete>
+	
+	<delete id="deleteByVendorNo">
+		delete from product where vendor_no = #{vendorNo}
+	</delete>
+	
+</mapper>
